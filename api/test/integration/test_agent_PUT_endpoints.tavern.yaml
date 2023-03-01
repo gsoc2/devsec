@@ -3,7 +3,7 @@ test_name: PUT /agents/group
 
 stages:
 
-  # PUT /agents/group?group_id=wrong_group
+  # PUT /agents/group?group_name=wrong_group
   - name: Try to assign all agents to a non existing group
     request: &put_agents_group
       verify: False
@@ -12,27 +12,27 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: wrong_group
+        group_name: wrong_group
     response: &resource_not_found_group
       status_code: 404
       json:
         error: 1710
 
-    # PUT /agents/group?group_id=wrong_group&agents_list=wrong_agent
+    # PUT /agents/group?group_name=wrong_group&agents_list=wrong_agent
   - name: Try to assign an invalid agent_id to a non existing group
     request:
       verify: False
       <<: *put_agents_group
       params:
         agents_list: "wrong_agent"
-        group_id: "wrong_group"
+        group_name: "wrong_group"
     response:
       status_code: 400
       json: &error_spec
         detail: !anystr
         title: !anystr
 
-        # PUT /agents/group?group_id=wrong_%_group
+        # PUT /agents/group?group_name=wrong_%_group
   - name: Try to assign all agents to an invalid group id
     request:
       verify: False
@@ -41,7 +41,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: 'wrong_%_group'
+        group_name: 'wrong_%_group'
     response:
       status_code: 400
       json:
@@ -56,11 +56,11 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: "001"
-        group_id: 'ar.conf'
+        group_name: 'ar.conf'
     response:
       <<: *resource_not_found_group
 
-    # PUT /agents/group?group_id=default&agents_list=998,999
+    # PUT /agents/group?group_name=default&agents_list=998,999
   - name: Try to assign non existing agents to group default
     request:
       verify: False
@@ -70,7 +70,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: "998,999"
-        group_id: default
+        group_name: default
     response:
       status_code: 200
       json:
@@ -86,7 +86,7 @@ stages:
           total_affected_items: 0
           total_failed_items: 2
 
-    # PUT /agents/group?group_id=default&agents_list=000,999
+    # PUT /agents/group?group_name=default&agents_list=000,999
   - name: Try to assign 000 and a non existing agent to group default
     request:
       verify: False
@@ -96,7 +96,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: "000,999"
-        group_id: default
+        group_name: default
     response:
       status_code: 200
       json:
@@ -115,7 +115,7 @@ stages:
           total_affected_items: 0
           total_failed_items: 2
 
-    # PUT /agents/group?group_id=default&agents_list=001,002
+    # PUT /agents/group?group_name=default&agents_list=001,002
   - name: Try to assign agents 001 and 002 to group default where they already belong
     request:
       verify: False
@@ -125,7 +125,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: "001,002"
-        group_id: default
+        group_name: default
     response:
       status_code: 200
       json:
@@ -141,7 +141,7 @@ stages:
           total_affected_items: 0
           total_failed_items: 2
 
-    # PUT /agents/group?group_id=group1&agents_list=003,004,005
+    # PUT /agents/group?group_name=group1&agents_list=003,004,005
   - name: Assign agents 003, 004 and 005 to group1
     request:
       verify: False
@@ -151,7 +151,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: "003,004,005"
-        group_id: group1
+        group_name: group1
     response:
       verify_response_with:
         function: tavern_utils:healthcheck_agent_restart
@@ -172,7 +172,7 @@ stages:
           total_affected_items: 2
           total_failed_items: 1
 
-    # PUT /agents/group?group_id=group2
+    # PUT /agents/group?group_name=group2
   - name: Assign all agents to group2
     request:
       verify: False
@@ -181,7 +181,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group2
+        group_name: group2
     response:
       verify_response_with:
         function: tavern_utils:healthcheck_agent_restart
@@ -201,7 +201,7 @@ stages:
             - "012"
           total_affected_items: 7
 
-    # PUT /agents/group?group_id=group2&force_single_group=true
+    # PUT /agents/group?group_name=group2&force_single_group=true
   - name: Assign all agents to group2 with force_single_group
     request:
       verify: False
@@ -211,7 +211,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         force_single_group: True
-        group_id: group2
+        group_name: group2
     response:
       verify_response_with:
         function: tavern_utils:healthcheck_agent_restart
@@ -238,7 +238,7 @@ stages:
           total_affected_items: 12
 
 ---
-test_name: PUT /groups/{group_id}/configuration
+test_name: PUT /groups/{group_name}/configuration
 
 stages:
 
@@ -357,7 +357,7 @@ stages:
           total_affected_items: !anyint
 
 ---
-test_name: PUT /agents/group/{group_id}/restart
+test_name: PUT /agents/group/{group_name}/restart
 
 stages:
 
@@ -659,7 +659,7 @@ stages:
           total_failed_items: 0
 
 ---
-test_name: PUT /agents/{agent_id}/group/{group_id}
+test_name: PUT /agents/{agent_id}/group/{group_name}
 
 stages:
 

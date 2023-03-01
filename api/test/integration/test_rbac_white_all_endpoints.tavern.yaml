@@ -240,7 +240,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: DELETE /agents/{agent_id}/group/{group_id}
+test_name: DELETE /agents/{agent_id}/group/{group_name}
 
 stages:
   - name: Try to remove agent 001 from group1
@@ -254,7 +254,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: PUT /agents/{agent_id}/group/{group_id}
+test_name: PUT /agents/{agent_id}/group/{group_name}
 
 stages:
   - name: Try to remove agent 005 from all groups
@@ -393,7 +393,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: 006,010
-        group_id: group2
+        group_name: group2
     response:
       <<: *permission_denied
 
@@ -409,12 +409,12 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group2
+        group_name: group2
     response:
       <<: *permission_denied
 
 ---
-test_name: PUT /agents/group/{group_id}/restart
+test_name: PUT /agents/group/{group_name}/restart
 
 stages:
   - name: Try to restart agents from group2
@@ -1492,14 +1492,14 @@ stages:
       url: "{protocol:s}://{host:s}:{port:d}/groups"
       method: POST
       json:
-        group_id: "group5"
+        group_name: "group5"
       headers:
         Authorization: "Bearer {test_login_token}"
     response:
       <<: *permission_denied
 
 ---
-test_name: GET /groups/{group_id}/agents
+test_name: GET /groups/{group_name}/agents
 
 stages:
   - name: Try to get agents in group1
@@ -1513,7 +1513,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: GET /groups/{group_id}/configuration
+test_name: GET /groups/{group_name}/configuration
 
 stages:
   - name: Try to get group1 configuration
@@ -1527,7 +1527,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: PUT /groups/{group_id}/configuration
+test_name: PUT /groups/{group_name}/configuration
 
 stages:
   - name: Try to update group1 configuration
@@ -1544,7 +1544,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: GET /groups/{group_id}/files/{filename}/json
+test_name: GET /groups/{group_name}/files/{filename}/json
 
 stages:
   - name: Try to get one file of a group
@@ -1558,7 +1558,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: GET /groups/{group_id}/files/{filename}/xml
+test_name: GET /groups/{group_name}/files/{filename}/xml
 
 stages:
   - name: Try to get one file of a group
@@ -1572,7 +1572,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: GET /groups/{group_id}/files
+test_name: GET /groups/{group_name}/files
 
 stages:
   - name: Try to get group files

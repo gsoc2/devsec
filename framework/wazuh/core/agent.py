@@ -83,14 +83,40 @@ class WazuhDBQueryAgents(WazuhDBQuery):
         unify_wazuh_version_format(filters)
         if min_select_fields is None:
             min_select_fields = {'id'}
+
+        joins = {
+            'belongs': {
+                'type': 'left', 
+                'conditions': ['id=belongs.id_agent']
+            },
+        }
+        group_by=['id']
+
         backend = WazuhDBBackend(query_format='global')
         WazuhDBQuery.__init__(self, offset=offset, limit=limit, table='agent', sort=sort, search=search, select=select,
                               filters=filters, fields=Agent.fields, default_sort_field=default_sort_field,
                               default_sort_order='ASC', query=query, backend=backend,
                               min_select_fields=min_select_fields, count=count, get_data=get_data,
                               date_fields={'lastKeepAlive', 'dateAdd'}, extra_fields={'internal_key'},
-                              distinct=distinct, rbac_negate=rbac_negate)
+                              distinct=distinct, rbac_negate=rbac_negate, joins=joins, group_by=group_by)
         self.remove_extra_fields = remove_extra_fields
+
+    def _set_group_field_select_value(self):
+        """Wraps the field value with the GROUP_CONCAT function to join all groups in the same text field."""
+        group_field = 'group'
+        if group_field in self.fields:
+            self.fields[group_field] = 'GROUP_CONCAT(belongs.name_group)'
+
+    def _get_total_items(self):
+        self._set_group_field_select_value()
+        super()._get_total_items()
+
+    def _execute_data_query(self):
+        self._set_group_field_select_value()
+        super()._execute_data_query()
+
+    def _default_count_query(self):
+        return "SELECT COUNT(*) FROM ({0} GROUP BY id)"
 
     def _filter_date(self, date_filter: dict, filter_db_name: str):
         """Add date filter to the Wazuh query."""
@@ -204,30 +230,26 @@ class WazuhDBQueryAgents(WazuhDBQuery):
         if self.query_filters:
             # if only traditional filters have been defined, remove last AND from the query.
             self.query_filters[-1]['separator'] = '' if not self.q else 'AND'
-
+    
     def _process_filter(self, field_name: str, field_filter: str, q_filter: dict):
         """Process filters for specific fields.
-
         Raises
         ------
         WazuhError(1409)
             If the operator of the filter is not valid.
         """
         if field_name == 'group' and q_filter['value'] is not None:
-            valid_group_operators = {'=', '!=', '~'}
-
-            if q_filter['operator'] == '=':
-                self.query += f"(',' || {self.fields[field_name]} || ',') LIKE :{field_filter}"
-                self.request[field_filter] = f"%,{q_filter['value']},%"
+            if q_filter['operator'] == '=' or q_filter['operator'] == 'LIKE':
+                self.query += 'id IN '
             elif q_filter['operator'] == '!=':
-                self.query += f"NOT (',' || {self.fields[field_name]} || ',') LIKE :{field_filter}"
-                self.request[field_filter] = f"%,{q_filter['value']},%"
-            elif q_filter['operator'] == 'LIKE':
-                self.query += f"{self.fields[field_name]} LIKE :{field_filter}"
-                self.request[field_filter] = f"%{q_filter['value']}%"
+                self.query += 'belongs.name_group IS NOT NULL AND id NOT IN '
             else:
+                valid_group_operators = {'=', '!=', '~'}
                 raise WazuhError(1409, f"Valid operators for 'group' field: {', '.join(valid_group_operators)}. "
                                        f"Used operator: {q_filter['operator']}")
+
+            self.query += f"(SELECT id_agent FROM belongs WHERE name_group LIKE :{field_filter})"
+            self.request[field_filter] = f"%{q_filter['value']}%"
         else:
             WazuhDBQuery._process_filter(self, field_name, field_filter, q_filter)
 
@@ -285,7 +307,7 @@ class WazuhDBQueryGroup(WazuhDBQuery):
 
     def _add_sort_to_query(self):
         """Consider the option to sort by count."""
-        self.fields['count'] = 'count(id_group)'
+        self.fields['count'] = 'count(name_group)'
         super()._add_sort_to_query()
 
     def _add_search_to_query(self):
@@ -304,7 +326,7 @@ class WazuhDBQueryGroup(WazuhDBQuery):
         str
             Default query.
         """
-        return "SELECT name, count(id_group) AS count from `group` LEFT JOIN `belongs` on id=id_group WHERE "
+        return "SELECT name, count(name_group) AS count from `group` LEFT JOIN `belongs` on name=name_group WHERE "
 
     def _get_total_items(self):
         """Get total items."""
@@ -383,8 +405,15 @@ class WazuhDBQueryGroupByAgents(WazuhDBQueryGroupBy, WazuhDBQueryAgents):
             Fields to filter by.
         """
         WazuhDBQueryAgents.__init__(self, *args, **kwargs)
+        joins = {
+            'belongs': {
+                'type': 'left', 
+                'conditions': ['id=belongs.id_agent']
+            },
+        }
         WazuhDBQueryGroupBy.__init__(self, *args, table=self.table, fields=self.fields, filter_fields=filter_fields,
-                                     default_sort_field=self.default_sort_field, backend=self.backend, **kwargs)
+                                     default_sort_field=self.default_sort_field, backend=self.backend, joins=joins,
+                                     **kwargs)
         self.remove_extra_fields = True
 
     def _format_data_into_dictionary(self) -> str:
@@ -423,18 +452,18 @@ class WazuhDBQueryGroupByAgents(WazuhDBQueryGroupBy, WazuhDBQueryAgents):
 class WazuhDBQueryMultigroups(WazuhDBQueryAgents):
     """Class used to query agents with multigroups."""
 
-    def __init__(self, group_id: str, query: str = '', *args: dict, **kwargs: dict):
+    def __init__(self, group_name: str, query: str = '', *args: dict, **kwargs: dict):
         """Class constructor.
 
         Parameters
         ----------
-        group_id : str
-            ID of the group.
+        group_name : str
+            Name of the group.
         query : str
             Query.
         """
-        self.group_id = group_id
-        query = 'group={}'.format(group_id) + (';' + query if query else '')
+        self.group_name = group_name
+        query = 'group={}'.format(group_name) + (';' + query if query else '')
         WazuhDBQueryAgents.__init__(self, query=query, *args, **kwargs)
 
     def _default_query(self) -> str:
@@ -445,7 +474,7 @@ class WazuhDBQueryMultigroups(WazuhDBQueryAgents):
         str
             Default query.
         """
-        return "SELECT {0} FROM agent a LEFT JOIN belongs b ON a.id = b.id_agent" if self.group_id != "null" \
+        return "SELECT {0} FROM agent a LEFT JOIN belongs b ON a.id = b.id_agent" if self.group_name != "null" \
             else "SELECT {0} FROM agent a"
 
     def _default_count_query(self) -> str:
@@ -463,13 +492,12 @@ class WazuhDBQueryMultigroups(WazuhDBQueryAgents):
         self.total_items = self.backend.execute(self.query.format(self._default_count_query()), self.request, True)
         self.query += ' GROUP BY a.id '
 
-
 class Agent:
     """Wazuh Agent object."""
     fields = {'id': 'id', 'name': 'name', 'ip': 'coalesce(ip,register_ip)', 'status': 'connection_status',
               'os.name': 'os_name', 'os.version': 'os_version', 'os.platform': 'os_platform',
               'version': 'version', 'manager': 'manager_host', 'dateAdd': 'date_add',
-              'group': '`group`', 'mergedSum': 'merged_sum', 'configSum': 'config_sum',
+              'group': 'belongs.name_group', 'mergedSum': 'merged_sum', 'configSum': 'config_sum',
               'os.codename': 'os_codename', 'os.major': 'os_major', 'os.minor': 'os_minor',
               'os.uname': 'os_uname', 'os.arch': 'os_arch', 'os.build': 'os_build',
               'node_name': 'node_name', 'lastKeepAlive': 'last_keepalive', 'internal_key': 'internal_key',
@@ -834,13 +862,13 @@ class Agent:
         self.key = self.compute_key()
 
     @staticmethod
-    def delete_single_group(group_id: str) -> dict:
+    def delete_single_group(group_name: str) -> dict:
         """Delete a group.
 
         Parameters
         ----------
-        group_id : str
-            Group ID.
+        group_name : str
+            Group name.
 
         Returns
         -------
@@ -848,11 +876,11 @@ class Agent:
             Confirmation message.
         """
         # Delete group directory
-        group_path = path.join(common.SHARED_PATH, group_id)
+        group_path = path.join(common.SHARED_PATH, group_name)
         if path.exists(group_path):
             rmtree(group_path)
 
-        msg = "Group '{0}' deleted.".format(group_id)
+        msg = "Group '{0}' deleted.".format(group_name)
 
         return {'message': msg}
 
@@ -906,12 +934,12 @@ class Agent:
         return data
 
     @staticmethod
-    def add_group_to_agent(group_id: str, agent_id: str, replace: bool = False, replace_list: list = None) -> str:
+    def add_group_to_agent(group_name: str, agent_id: str, replace: bool = False, replace_list: list = None) -> str:
         """Add an existing group to an agent.
 
         Parameters
         ----------
-        group_id: str
+        group_name: str
             Name of the group.
         agent_id: str
             ID of the agent.
@@ -932,7 +960,7 @@ class Agent:
         Returns
         -------
         str
-            Confirmation message with agent and group IDs.
+            Confirmation message with agent ID and group name.
         """
         if replace_list is None:
             replace_list = []
@@ -948,7 +976,7 @@ class Agent:
                 raise WazuhError(1752)
         else:
             # Check if the group already belongs to the agent
-            if group_id in agent_groups:
+            if group_name in agent_groups:
                 raise WazuhError(1751)
 
         # Check multigroup limit
@@ -956,9 +984,9 @@ class Agent:
             raise WazuhError(1737)
 
         # Update group
-        Agent.set_agent_group_relationship(agent_id, group_id, override=replace)
+        Agent.set_agent_group_relationship(agent_id, group_name, override=replace)
 
-        return f"Agent {agent_id} assigned to {group_id}"
+        return f"Agent {agent_id} assigned to {group_name}"
 
     @staticmethod
     def check_if_delete_agent(id: str, seconds: int) -> bool:
@@ -998,29 +1026,29 @@ class Agent:
         return remove_agent
 
     @staticmethod
-    def group_exists(group_id: str) -> bool:
+    def group_exists(group_name: str) -> bool:
         """Check if the group exists
 
         Parameters
         ----------
-        group_id : str
-            Group ID.
+        group_name : str
+            Group name.
 
         Raises
         ------
         WazuhError(1722)
-            Incorrect format for group_id.
+            Incorrect format for group_name.
 
         Returns
         -------
         bool
             True if group exists, False otherwise.
         """
-        # Input Validation of group_id
-        if not InputValidator().group(group_id):
+        # Input Validation of group_name
+        if not InputValidator().group(group_name):
             raise WazuhError(1722)
 
-        if path.isdir(path.join(common.SHARED_PATH, group_id)):
+        if path.isdir(path.join(common.SHARED_PATH, group_name)):
             return True
         else:
             return False
@@ -1037,7 +1065,7 @@ class Agent:
         Returns
         -------
         list
-            List of group IDs.
+            List of group names.
         """
         wdb = WazuhDBConnection()
         try:
@@ -1047,15 +1075,15 @@ class Agent:
             wdb.close()
 
     @staticmethod
-    def set_agent_group_relationship(agent_id: str, group_id: str, remove: bool = False, override: bool = False):
+    def set_agent_group_relationship(agent_id: str, group_name: str, remove: bool = False, override: bool = False):
         """Set a relationship between an agent and a group.
 
         Parameters
         ----------
         agent_id : str
             ID of the agent.
-        group_id : str
-            ID of the group.
+        group_name : str
+            Name of the group.
         remove : bool
             Set the relationship with the remove mode.
         override : bool
@@ -1067,8 +1095,11 @@ class Agent:
         else:
             mode = 'append' if not override else 'override'
 
-        command = f'global set-agent-groups {{"mode":"{mode}","sync_status":"syncreq","data":[{{"id":{agent_id},' \
-                  f'"groups":["{group_id}"]}}]}}'
+        command = 'global set-agent-groups {' \
+                f'"mode":"{mode}","sync_status":"syncreq","data":' \
+                '[{' \
+                f'"id":{agent_id},"groups":["{group_name}"]' \
+                '}]}'
 
         wdb = WazuhDBConnection()
         try:
@@ -1077,15 +1108,15 @@ class Agent:
             wdb.close()
 
     @staticmethod
-    def unset_single_group_agent(agent_id: str, group_id: str, force: bool = False) -> str:
+    def unset_single_group_agent(agent_id: str, group_name: str, force: bool = False) -> str:
         """Unset the agent group. If agent has multigroups, it will preserve all previous groups except the last one.
 
         Parameters
         ----------
         agent_id : str
             Agent ID.
-        group_id : str
-            Group ID.
+        group_name : str
+            Group name.
         force : bool
             Do not check if agent or group exists.
 
@@ -1112,26 +1143,26 @@ class Agent:
             if agent_id == "000":
                 raise WazuhError(1703)
 
-            if not Agent.group_exists(group_id):
+            if not Agent.group_exists(group_name):
                 raise WazuhResourceNotFound(1710)
 
         # Get agent's group
         group_list = set(Agent.get_agent_groups(agent_id))
         set_default = False
 
-        # Check agent belongs to group group_id
-        if group_id not in group_list:
+        # Check agent belongs to group group_name
+        if group_name not in group_list:
             raise WazuhError(1734)
         elif len(group_list) == 1:
-            if group_id == 'default':
+            if group_name == 'default':
                 raise WazuhError(1745)
             else:
                 set_default = True
 
         # Update group file
-        Agent.set_agent_group_relationship(agent_id, group_id, remove=True)
+        Agent.set_agent_group_relationship(agent_id, group_name, remove=True)
 
-        return f"Agent '{agent_id}' removed from '{group_id}'." + (" Agent reassigned to group default."
+        return f"Agent '{agent_id}' removed from '{group_name}'." + (" Agent reassigned to group default."
                                                                    if set_default else "")
 
     def get_config(self, component: str = '', config: str = '', agent_version: str = '') -> dict:

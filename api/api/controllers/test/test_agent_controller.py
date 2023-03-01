@@ -323,7 +323,7 @@ async def test_delete_single_agent_single_group(mock_exc, mock_dapi, mock_remove
     """Verify 'delete_single_agent_single_group' endpoint is working as expected."""
     result = await delete_single_agent_single_group(request=mock_request,
                                                     agent_id='001',
-                                                    group_id='001')
+                                                    group_name='001')
     f_kwargs = {'agent_list': ['001'],
                 'group_list': ['001']
                 }
@@ -350,7 +350,7 @@ async def test_put_agent_single_group(mock_exc, mock_dapi, mock_remove, mock_dfu
     """Verify 'put_agent_single_group' endpoint is working as expected."""
     result = await put_agent_single_group(request=mock_request,
                                           agent_id='001',
-                                          group_id='001')
+                                          group_name='001')
     f_kwargs = {'agent_list': ['001'],
                 'group_list': ['001'],
                 'replace': False
@@ -661,7 +661,7 @@ async def test_delete_multiple_agent_single_group(mock_exc, mock_dapi, mock_remo
     """Verify 'delete_multiple_agent_single_group' endpoint is working as expected."""
     result = await delete_multiple_agent_single_group(request=mock_request,
                                                       agents_list=mock_alist,
-                                                      group_id='001')
+                                                      group_name='001')
     if 'all' in mock_alist:
         mock_alist = None
     f_kwargs = {'agent_list': mock_alist,
@@ -690,7 +690,7 @@ async def test_put_multiple_agent_single_group(mock_exc, mock_dapi, mock_remove,
                                                mock_request=MagicMock()):
     """Verify 'put_multiple_agent_single_group' endpoint is working as expected."""
     result = await put_multiple_agent_single_group(request=mock_request,
-                                                   group_id='001',
+                                                   group_name='001',
                                                    agents_list='001')
     f_kwargs = {'agent_list': '001',
                 'group_list': ['001'],
@@ -782,7 +782,7 @@ async def test_get_list_group(mock_exc, mock_dapi, mock_remove, mock_dfunc, mock
 async def test_get_agents_in_group(mock_exc, mock_dapi, mock_remove, mock_dfunc, mock_exp, mock_request=MagicMock()):
     """Verify 'get_agents_in_group' endpoint is working as expected."""
     result = await get_agents_in_group(request=mock_request,
-                                       group_id='001')
+                                       group_name='001')
     f_kwargs = {'group_list': ['001'],
                 'offset': 0,
                 'limit': DATABASE_LIMIT,
@@ -842,7 +842,7 @@ async def test_post_group(mock_exc, mock_dapi, mock_remove, mock_dfunc, mock_exp
 async def test_get_group_config(mock_exc, mock_dapi, mock_remove, mock_dfunc, mock_exp, mock_request=MagicMock()):
     """Verify 'get_group_config' endpoint is working as expected."""
     result = await get_group_config(request=mock_request,
-                                    group_id='001')
+                                    group_name='001')
     f_kwargs = {'group_list': ['001'],
                 'offset': 0,
                 'limit': DATABASE_LIMIT
@@ -871,7 +871,7 @@ async def test_put_group_config(mock_exc, mock_dapi, mock_remove, mock_dfunc, mo
     with patch('api.controllers.agent_controller.Body.validate_content_type'):
         with patch('api.controllers.agent_controller.Body.decode_body') as mock_dbody:
             result = await put_group_config(request=mock_request,
-                                            group_id='001',
+                                            group_name='001',
                                             body={})
             f_kwargs = {'group_list': ['001'],
                         'file_data': mock_dbody.return_value
@@ -898,7 +898,7 @@ async def test_put_group_config(mock_exc, mock_dapi, mock_remove, mock_dfunc, mo
 async def test_get_group_files(mock_exc, mock_dapi, mock_remove, mock_dfunc, mock_exp, mock_request=MagicMock()):
     """Verify 'get_group_files' endpoint is working as expected."""
     result = await get_group_files(request=mock_request,
-                                   group_id='001')
+                                   group_name='001')
     hash_ = mock_request.query.get('hash', 'md5')  # Select algorithm to generate the returned checksums.
     f_kwargs = {'group_list': ['001'],
                 'offset': 0,
@@ -934,7 +934,7 @@ async def test_get_group_files(mock_exc, mock_dapi, mock_remove, mock_dfunc, moc
 async def test_get_group_file_json(mock_exc, mock_dapi, mock_remove, mock_dfunc, mock_exp, mock_request=MagicMock()):
     """Verify 'get_group_file_json' endpoint is working as expected."""
     result = await get_group_file_json(request=mock_request,
-                                       group_id='001',
+                                       group_name='001',
                                        file_name='filename_value')
     f_kwargs = {'group_list': ['001'],
                 'filename': 'filename_value',
@@ -963,7 +963,7 @@ async def test_get_group_file_json(mock_exc, mock_dapi, mock_remove, mock_dfunc,
 async def test_get_group_file_xml(mock_exc, mock_dapi, mock_remove, mock_dfunc, mock_exp, mock_request=MagicMock()):
     """Verify 'get_group_file_xml' endpoint is working as expected."""
     result = await get_group_file_xml(request=mock_request,
-                                      group_id='001',
+                                      group_name='001',
                                       file_name='filename_value')
     f_kwargs = {'group_list': ['001'],
                 'filename': 'filename_value',
@@ -995,7 +995,7 @@ async def test_restart_agents_by_group(mock_aiwr, mock_dapi, mock_remove, mock_d
     """Verify 'restart_agents_by_group' endpoint is working as expected."""
     with patch('api.controllers.agent_controller.raise_if_exc', return_value=mock_alist) as mock_exc:
         result = await restart_agents_by_group(request=mock_request,
-                                               group_id='001')
+                                               group_name='001')
         f_kwargs = {'group_list': ['001'],
                     'select': ['id'],
                     'limit': None

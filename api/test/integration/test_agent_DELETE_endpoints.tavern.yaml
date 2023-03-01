@@ -1,5 +1,5 @@
 ---
-test_name: DELETE /agents/{agent_id}/group/{group_id}
+test_name: DELETE /agents/{agent_id}/group/{group_name}
 
 stages:
 
@@ -208,7 +208,7 @@ test_name: DELETE /agents/group
 
 stages:
 
-    # DELETE /agents/group?group_id=wrong_group&agents_list=001,002
+    # DELETE /agents/group?group_name=wrong_group&agents_list=001,002
   - name: Try to remove agents from non existing group
     request:
       verify: False
@@ -218,13 +218,13 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: 001,002
-        group_id: wrong_group
+        group_name: wrong_group
     response:
       status_code: 404
       json:
         error: 1710
 
-    # DELETE /agents/group?group_id=group1&agents_list=000,002
+    # DELETE /agents/group?group_name=group1&agents_list=000,002
   - name: Try to remove agents 000 and 002(not assigned to group1) from group1
     request:
       verify: False
@@ -234,7 +234,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: 000,002
-        group_id: group1
+        group_name: group1
     response:
       status_code: 200
       json:
@@ -263,7 +263,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: 998,999
-        group_id: group1
+        group_name: group1
     response:
       strict: False
       status_code: 200
@@ -290,7 +290,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: 006,010
-        group_id: group2
+        group_name: group2
     response:
       status_code: 200
       json:
@@ -302,7 +302,7 @@ stages:
           total_affected_items: 2
     delay_after: !float "{global_db_delay}"
 
-    # DELETE /agents/group?group_id=group2
+    # DELETE /agents/group?group_name=group2
   - name: Remove all agents from group2 (008)
     request:
       verify: False
@@ -311,7 +311,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group2
+        group_name: group2
         agents_list: all
     response:
       status_code: 200
@@ -322,7 +322,7 @@ stages:
             - '008'
           total_affected_items: 1
 
-  # DELETE /agents/group?group_id=group2
+  # DELETE /agents/group?group_name=group2
   - name: Remove all agents from group2 (invalid agents_list)
     request:
       verify: False
@@ -331,12 +331,12 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group2
+        group_name: group2
         agents_list: none
     response:
       status_code: 400
 
-  # DELETE /agents/group?group_id=group2
+  # DELETE /agents/group?group_name=group2
   - name: Remove all agents from group2 (invalid agents_list)
     request:
       verify: False
@@ -345,7 +345,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group2
+        group_name: group2
     response:
       status_code: 400
 

@@ -317,7 +317,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       json:
-        group_id: "group4"
+        group_name: "group4"
     response:
       status_code: 200
       json:
@@ -332,7 +332,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       json:
-        group_id: "group1"
+        group_name: "group1"
     response:
       status_code: 400
       json:
@@ -347,7 +347,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       json:
-        group_id: ";wrong_name"
+        group_name: ";wrong_name"
     response:
       status_code: 400
       json:
@@ -362,7 +362,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       json:
-        group_id: "ar.conf"
+        group_name: "ar.conf"
     response:
       status_code: 400
       json:

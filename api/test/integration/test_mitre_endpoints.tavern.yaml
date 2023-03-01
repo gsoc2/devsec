@@ -1360,7 +1360,7 @@ stages:
       verify: False
       <<: *general_groups_request
       params:
-        group_ids:
+        group_names:
           - "intrusion-set--00f67a77-86a4-4adf-be26-1a54fc713340"
           - "intrusion-set--025bdaa9-897d-4bad-afa6-013ba5734653"
           - "intrusion-set--03506554-5f37-4f8f-9ce4-999999999999"
@@ -1448,13 +1448,13 @@ stages:
       json:
         <<: *invalid_select
 
-  - name: Show groups using select and specifying a non-existent id in the group_ids parameter
+  - name: Show groups using select and specifying a non-existent id in the group_names parameter
     request:
       verify: False
       <<: *general_groups_request
       params:
         select: 'software'
-        group_ids: 'invalid'
+        group_names: 'invalid'
     response:
       status_code: 200
       json:
@@ -1485,7 +1485,7 @@ stages:
           search_param: "NEODYMIUM"
       save:
         json:
-          group_id: data.affected_items[1].id
+          group_name: data.affected_items[1].id
 
   - name: Search groups using offset and limit
     request:
@@ -1501,7 +1501,7 @@ stages:
         error: 0
         data:
           affected_items:
-            - id: "{group_id}"
+            - id: "{group_name}"
           failed_items: []
           total_affected_items: !anyint
           total_failed_items: 0

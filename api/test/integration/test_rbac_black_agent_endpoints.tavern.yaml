@@ -369,7 +369,7 @@ stages:
          total_failed_items: 0
 
 ---
-test_name: GET /groups/{group_id}/agents
+test_name: GET /groups/{group_name}/agents
 
 stages:
 
@@ -393,7 +393,7 @@ stages:
          total_failed_items: 0
 
 ---
-test_name: GET /groups/{group_id}/configuration
+test_name: GET /groups/{group_name}/configuration
 
 stages:
 
@@ -418,7 +418,7 @@ stages:
      status_code: 200
 
 ---
-test_name: GET /groups/{group_id}/files
+test_name: GET /groups/{group_name}/files
 
 stages:
 
@@ -457,7 +457,7 @@ stages:
          failed_items: []
 
 ---
-test_name: GET /groups/{group_id}/files/{filename}/json
+test_name: GET /groups/{group_name}/files/{filename}/json
 
 stages:
 
@@ -482,7 +482,7 @@ stages:
      status_code: 200
 
 ---
-test_name: GET /groups/{group_id}/files/{filename}/xml
+test_name: GET /groups/{group_name}/files/{filename}/xml
 
 stages:
 
@@ -695,7 +695,7 @@ stages:
      <<: *permission_denied
 
 ---
-test_name: DELETE /agents/{agent_id}/group/{group_id}
+test_name: DELETE /agents/{agent_id}/group/{group_name}
 
 stages:
 
@@ -822,7 +822,7 @@ stages:
           total_failed_items: 3
 
 ---
-test_name: DELETE /agents/group?group_id=group_id
+test_name: DELETE /agents/group?group_name=group_name
 
 stages:
 
@@ -834,7 +834,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group2
+        group_name: group2
         agents_list: all
     response:
       <<: *permission_denied
@@ -847,7 +847,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group1
+        group_name: group1
         agents_list: all
     response:
       status_code: 200
@@ -868,7 +868,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: '004,007,008,998,999'
-        group_id: group1
+        group_name: group1
     response:
       status_code: 200
       json:
@@ -891,7 +891,7 @@ stages:
           total_failed_items: 5
 
 ---
-test_name: DELETE groups?groups_list=group_id
+test_name: DELETE groups?groups_list=group_name
 
 stages:
 
@@ -1217,12 +1217,12 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       json:
-        group_id: "group4"
+        group_name: "group4"
     response:
       <<: *permission_denied
 
 ---
-test_name: PUT /agents/group?group_id={group_id}
+test_name: PUT /agents/group?group_name={group_name}
 
 stages:
 
@@ -1234,7 +1234,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group2
+        group_name: group2
     response:
       <<: *permission_denied
 
@@ -1247,7 +1247,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: '003,008,011'
-        group_id: group1
+        group_name: group1
     response:
       <<: *permission_denied
 
@@ -1260,7 +1260,7 @@ stages:
         Authorization: "Bearer {test_login_token}"
       params:
         agents_list: '001,002,005'
-        group_id: group1
+        group_name: group1
     response:
       verify_response_with:
         function: tavern_utils:healthcheck_agent_restart
@@ -1289,7 +1289,7 @@ stages:
       headers:
         Authorization: "Bearer {test_login_token}"
       params:
-        group_id: group1
+        group_name: group1
     response:
       status_code: 200
       json:
@@ -1302,7 +1302,7 @@ stages:
           total_failed_items: 0
 
 ---
-test_name: PUT /groups/{group_id}/configuration
+test_name: PUT /groups/{group_name}/configuration
 
 stages:
 
@@ -1337,7 +1337,7 @@ stages:
       <<: *permission_denied
 
 ---
-test_name: PUT /agents/group/{group_id}/restart
+test_name: PUT /agents/group/{group_name}/restart
 
 stages:
 
@@ -1514,7 +1514,7 @@ stages:
           total_failed_items: 0
 
 ---
-test_name: PUT /agents/{agent_id}/group/{group_id}
+test_name: PUT /agents/{agent_id}/group/{group_name}
 
 stages:
 
