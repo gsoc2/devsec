@@ -51,3 +51,15 @@ int __wrap_Privsep_GetGroup(const char *name) {
 
     return mock();
 }
+
+int __wrap_Privsep_SetGroup(gid_t gid)
+{
+    check_expected(gid);
+    return mock();
+}
+
+int __wrap_Privsep_SetUser(uid_t uid)
+{
+    check_expected(uid);
+    return mock();
+}
