@@ -4606,7 +4606,7 @@ stages:
         error: 0
         data:
           affected_items:
-            - count: 4
+            - count: 6
               status: 'active'
           failed_items: []
           total_affected_items: !anyint
