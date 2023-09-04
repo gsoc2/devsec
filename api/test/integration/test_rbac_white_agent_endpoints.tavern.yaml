@@ -626,7 +626,7 @@ stages:
        error: 0
        data:
          affected_items:
-           - count: 6
+           - count: 13
              os:
                platform: !anystr
          failed_items: []

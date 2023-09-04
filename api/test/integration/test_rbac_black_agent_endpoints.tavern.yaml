@@ -619,7 +619,7 @@ stages:
        error: 0
        data:
          affected_items:
-           - count: 5
+           - count: 12
              os:
                platform: !anystr
          failed_items: []
