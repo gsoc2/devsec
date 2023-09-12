@@ -19,6 +19,8 @@ const std::unordered_map<std::string, std::string> allowedBlocks = {
     {"map", "stage.map"}, {"check", "stage.check"}};
 }
 
+constexpr auto PARSE_PREFIX {"parse|"};
+
 Builder getStageNormalizeBuilder(std::weak_ptr<Registry<Builder>> weakRegistry)
 {
     return [weakRegistry](const std::any& definition, std::shared_ptr<defs::IDefinitions> definitions)
@@ -70,10 +72,11 @@ Builder getStageNormalizeBuilder(std::weak_ptr<Registry<Builder>> weakRegistry)
                                    auto& [key, value] = tuple;
                                    json::Json stageParseValue;
                                    stageParseValue.setArray();
-                                   auto pos = key.find("parse|");
+                                   auto pos = key.find(PARSE_PREFIX);
                                    if (pos != std::string::npos)
                                    {
-                                       auto field = key.substr(pos + 6);
+                                       auto field = key.substr(pos + std::strlen(PARSE_PREFIX));
+                                       // Delete whitespace after '|'
                                        field.erase(std::remove_if(field.begin(), field.end(), ::isspace), field.end());
                                        key = "parse";
                                        if (value.isArray())
